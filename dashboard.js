@@ -3,6 +3,7 @@ import { BAKERY_LOCATION } from "./constants.js";
 import {
   calculateEta,
   escapeHtml,
+  formatDateTime,
   formatDistance,
   formatPhoneForDisplay,
   haversineKm
@@ -33,7 +34,7 @@ document.getElementById("addAgentButton").addEventListener("click", () => {
 function renderEmptyState() {
   tableBody.innerHTML = `
     <tr>
-      <td colspan="7">لا يوجد مناديب حالياً. اضغط "إضافة مندوب جديد" للبدء.</td>
+      <td colspan="8">لا يوجد مناديب حالياً. اضغط "إضافة مندوب جديد" للبدء.</td>
     </tr>
   `;
 }
@@ -237,6 +238,12 @@ function renderRows(agentsMap) {
       const eta = approved
         ? (hasCoordinates ? calculateEta(distanceKm, location.speed) || "غير متاح" : "جارٍ تحديد الموقع...")
         : "بانتظار الموافقة";
+      const entered100mAt = typeof agent.entered100mAt === "number" ? agent.entered100mAt : null;
+      const entered100mText = approved
+        ? (entered100mAt
+          ? formatDateTime(entered100mAt)
+          : (agent._within100m ? "داخل 100م الآن (بانتظار التسجيل)" : "لم يصل بعد"))
+        : "بانتظار الموافقة";
 
       return `
         <tr>
@@ -251,6 +258,7 @@ function renderRows(agentsMap) {
           <td>${escapeHtml(area)}</td>
           <td>${escapeHtml(distance)}</td>
           <td>${escapeHtml(eta)}</td>
+          <td>${escapeHtml(entered100mText)}</td>
           <td>
             <button
               class="delete-agent-btn"
@@ -309,7 +317,7 @@ onValue(
     console.error(error);
     tableBody.innerHTML = `
       <tr>
-        <td colspan="7">تعذر تحميل بيانات المندوبين من فايربيس.</td>
+        <td colspan="8">تعذر تحميل بيانات المندوبين من فايربيس.</td>
       </tr>
     `;
   }
