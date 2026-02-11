@@ -148,6 +148,7 @@ function resolveAreaForDisplay(agent) {
 
   if (typeof location.lat === "number" && typeof location.lng === "number") {
     scheduleAreaLookup(agent.id, location.lat, location.lng);
+    return `إحداثيات: ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`;
   }
 
   return "جارٍ تحديد المنطقة...";
