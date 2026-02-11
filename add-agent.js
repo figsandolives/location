@@ -10,6 +10,15 @@ import {
 const form = document.getElementById("addAgentForm");
 const feedback = document.getElementById("feedback");
 const submitButton = document.getElementById("submitButton");
+const REDIRECT_AFTER_WHATSAPP_KEY = "redirect_after_whatsapp";
+
+window.addEventListener("pageshow", () => {
+  // إذا عاد المستخدم من واتساب عبر زر الرجوع، انقله مباشرة للوحة التتبع.
+  if (sessionStorage.getItem(REDIRECT_AFTER_WHATSAPP_KEY) === "1") {
+    sessionStorage.removeItem(REDIRECT_AFTER_WHATSAPP_KEY);
+    window.location.replace("index.html");
+  }
+});
 
 function showFeedback(message, type) {
   feedback.className = `feedback ${type}`;
@@ -40,14 +49,6 @@ form.addEventListener("submit", async (event) => {
 
   submitButton.disabled = true;
   submitButton.textContent = "جارٍ الإرسال...";
-  let whatsappWindow = null;
-
-  try {
-    // فتح النافذة مبكرًا يقلل احتمال حظر المتصفح لرابط واتساب.
-    whatsappWindow = window.open("", "_blank", "noopener,noreferrer");
-  } catch {
-    whatsappWindow = null;
-  }
 
   try {
     const agentsRef = ref(db, "agents");
@@ -82,24 +83,24 @@ form.addEventListener("submit", async (event) => {
     ].join("\n");
 
     const whatsappUrl = `https://wa.me/${phoneWithCode}?text=${encodeURIComponent(message)}`;
+    sessionStorage.setItem(REDIRECT_AFTER_WHATSAPP_KEY, "1");
+
+    const whatsappWindow = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+
     if (whatsappWindow && !whatsappWindow.closed) {
-      whatsappWindow.location.href = whatsappUrl;
-    } else {
-      window.location.href = whatsappUrl;
+      // نبقي صفحة المتصفح على الجدول، وواتساب يفتح في تبويب آخر.
+      window.location.replace("index.html");
       return;
     }
 
-    showFeedback("تم إنشاء المندوب وإرسال رابط الموافقة على واتساب بنجاح.", "success");
-    form.reset();
+    // في حال منع النوافذ المنبثقة، افتح واتساب بنفس التبويب،
+    // وعند الرجوع سيتم التحويل تلقائيًا للجدول عبر pageshow.
+    window.location.href = whatsappUrl;
+    return;
 
-    setTimeout(() => {
-      window.location.href = "index.html";
-    }, 1200);
   } catch (error) {
     console.error(error);
-    if (whatsappWindow && !whatsappWindow.closed) {
-      whatsappWindow.close();
-    }
+    sessionStorage.removeItem(REDIRECT_AFTER_WHATSAPP_KEY);
     showFeedback("تعذر حفظ البيانات أو فتح واتساب. تحقق من إعدادات فايربيس ثم حاول مرة أخرى.", "error");
   } finally {
     submitButton.disabled = false;
