@@ -107,7 +107,8 @@ function shouldWritePosition(lat, lng, now) {
   const elapsed = now - lastWrite.updatedAt;
   const movedKm = haversineKm(lastWrite.lat, lastWrite.lng, lat, lng);
 
-  return elapsed > 5000 || movedKm > 0.02;
+  // تحديث أكثر سرعة لضمان ظهور البيانات على اللوحة لحظيًا بدون ريفرش يدوي.
+  return elapsed > 2000 || movedKm > 0.005;
 }
 
 async function startTracking() {
