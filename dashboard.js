@@ -18,8 +18,11 @@ const bakeryPositionEl = document.getElementById("bakeryPosition");
 const agentsRef = ref(db, "agents");
 const LIVE_TIMEOUT_MS = 20000;
 const RERENDER_INTERVAL_MS = 3000;
+const AREA_REFRESH_MS = 60000;
+const AREA_REFRESH_MOVE_KM = 0.3;
 
 let latestAgentsMap = {};
+const areaCache = new Map();
 
 bakeryPositionEl.textContent = `${BAKERY_LOCATION.name}: ${BAKERY_LOCATION.lat}, ${BAKERY_LOCATION.lng}`;
 
@@ -33,6 +36,121 @@ function renderEmptyState() {
       <td colspan="7">لا يوجد مناديب حالياً. اضغط "إضافة مندوب جديد" للبدء.</td>
     </tr>
   `;
+}
+
+function getAreaFromReversePayload(payload) {
+  const address = payload?.address || {};
+
+  return (
+    address.suburb ||
+    address.neighbourhood ||
+    address.city_district ||
+    address.city ||
+    address.town ||
+    address.village ||
+    address.state ||
+    payload?.display_name ||
+    "غير متاح"
+  );
+}
+
+async function reverseGeocodeArea(lat, lng) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=ar`;
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Reverse geocode failed");
+  }
+
+  const payload = await response.json();
+  return getAreaFromReversePayload(payload);
+}
+
+function scheduleAreaLookup(agentId, lat, lng) {
+  const now = Date.now();
+  const cached = areaCache.get(agentId);
+
+  if (cached?.pending) {
+    return;
+  }
+
+  if (cached?.lat != null && cached?.lng != null && cached?.lastFetchAt) {
+    const movedKm = haversineKm(cached.lat, cached.lng, lat, lng);
+    const recentlyFetched = now - cached.lastFetchAt < AREA_REFRESH_MS;
+
+    if (recentlyFetched && movedKm < AREA_REFRESH_MOVE_KM) {
+      return;
+    }
+  }
+
+  areaCache.set(agentId, {
+    area: cached?.area || "",
+    lat,
+    lng,
+    lastFetchAt: now,
+    pending: true
+  });
+
+  reverseGeocodeArea(lat, lng)
+    .then((area) => {
+      areaCache.set(agentId, {
+        area,
+        lat,
+        lng,
+        lastFetchAt: Date.now(),
+        pending: false
+      });
+      renderRows(latestAgentsMap);
+    })
+    .catch(() => {
+      const failed = areaCache.get(agentId);
+      areaCache.set(agentId, {
+        area: failed?.area || "",
+        lat,
+        lng,
+        lastFetchAt: Date.now(),
+        pending: false
+      });
+    });
+}
+
+function resolveAreaForDisplay(agent) {
+  const location = agent.location || {};
+  const hasCoordinates = agent._hasCoordinates;
+
+  if (typeof location.area === "string" && location.area.trim()) {
+    areaCache.set(agent.id, {
+      area: location.area.trim(),
+      lat: location.lat,
+      lng: location.lng,
+      lastFetchAt: Date.now(),
+      pending: false
+    });
+    return location.area.trim();
+  }
+
+  if (!hasCoordinates) {
+    return "غير متاح";
+  }
+
+  const cached = areaCache.get(agent.id);
+
+  if (cached?.area) {
+    if (typeof location.lat === "number" && typeof location.lng === "number") {
+      scheduleAreaLookup(agent.id, location.lat, location.lng);
+    }
+    return cached.area;
+  }
+
+  if (typeof location.lat === "number" && typeof location.lng === "number") {
+    scheduleAreaLookup(agent.id, location.lat, location.lng);
+  }
+
+  return "جارٍ تحديد المنطقة...";
 }
 
 function renderRows(agentsMap) {
@@ -111,7 +229,7 @@ function renderRows(agentsMap) {
         ? "متصل"
         : (approved ? "منقطع" : "بانتظار الموافقة");
 
-      const area = location.area || (hasCoordinates ? "جارٍ تحديد المنطقة..." : "غير متاح");
+      const area = resolveAreaForDisplay(agent);
       const distance = approved
         ? (hasCoordinates ? formatDistance(distanceKm) : "جارٍ تحديد الموقع...")
         : "بانتظار الموافقة";
