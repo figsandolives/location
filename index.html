@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تتبع مناديب مخبز التين والزيتون</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <button id="addAgentButton" class="add-agent-btn">اضافة مندوب جديد</button>
+
+    <main class="container">
+      <h1 class="header-title">تتبع مناديب مخبز التين والزيتون</h1>
+      <p class="header-subtitle">
+        نظام متابعة حي يعتمد على GPS (الأقمار الصناعية) لعرض موقع كل مندوب مباشرة، مع حساب
+        المسافة المتبقية والوقت المتوقع للوصول بدون تحديث الصفحة.
+      </p>
+
+      <section class="card table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>حالة الموافقة</th>
+              <th>اسم المندوب</th>
+              <th>رقم الهاتف</th>
+              <th>المنطقة المتواجد بها</th>
+              <th>مسافة البعد</th>
+              <th>الوقت المتوقع للوصول</th>
+              <th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody id="agentsTableBody">
+            <tr>
+              <td colspan="7">جارٍ تحميل البيانات...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <p class="small-muted" id="bakeryPosition"></p>
+    </main>
+
+    <script type="module" src="dashboard.js"></script>
+  </body>
+</html>

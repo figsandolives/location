@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>موافقة تتبع المندوب</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="card form-card">
+        <h1 class="form-title">موافقة تتبع الموقع</h1>
+        <p class="form-note">
+          مرحبًا <strong id="agentName">...</strong>
+          (<span id="agentPhone">...</span>)
+          <br />
+          بالضغط على الزر أدناه، يتم إرسال موقعك الحالي مباشرة إلى مخبز التين والزيتون.
+        </p>
+
+        <button id="approveButton" class="primary">أوافق على التتبع الآن</button>
+
+        <div id="statusBox" hidden></div>
+
+        <div id="liveInfo" class="live-box">
+          بانتظار تشغيل التتبع. بعد الموافقة ستظهر التحديثات الحية هنا لحظة بلحظة.
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="consent.js"></script>
+  </body>
+</html>
