@@ -107,6 +107,7 @@ form.addEventListener("submit", async (event) => {
       name,
       phone: phoneWithCode,
       consentStatus: "pending",
+      entered100mAt: null,
       createdAt: Date.now(),
       lastSeenAt: null,
       location: {
