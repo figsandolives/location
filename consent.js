@@ -1,4 +1,5 @@
 import { db } from "./firebase.js";
+import { BAKERY_LOCATION } from "./constants.js";
 import { haversineKm, formatDateTime } from "./utils.js";
 import {
   get,
@@ -22,6 +23,7 @@ let lastWrite = null;
 let lastAreaFetchAt = 0;
 let lastAreaPoint = null;
 let cachedArea = "";
+let wasInside100m = false;
 
 function setStatus(message, type) {
   statusBox.className = `feedback ${type}`;
@@ -156,11 +158,22 @@ async function startTracking() {
             updatedAt: now
           };
 
-          await update(agentRef, {
+          const isInside100m =
+            haversineKm(BAKERY_LOCATION.lat, BAKERY_LOCATION.lng, lat, lng) <= 0.1;
+          const entered100mNow = isInside100m && !wasInside100m;
+          wasInside100m = isInside100m;
+
+          const updatePayload = {
             consentStatus: "approved",
             lastSeenAt: now,
             location
-          });
+          };
+
+          if (entered100mNow) {
+            updatePayload.entered100mAt = now;
+          }
+
+          await update(agentRef, updatePayload);
 
           lastWrite = location;
 
@@ -211,6 +224,13 @@ async function loadAgentData() {
     const agent = snapshot.val();
     agentNameEl.textContent = agent.name || "مندوب";
     agentPhoneEl.textContent = agent.phone ? `+${agent.phone}` : "غير متاح";
+
+    const existingLat = agent?.location?.lat;
+    const existingLng = agent?.location?.lng;
+    if (typeof existingLat === "number" && typeof existingLng === "number") {
+      wasInside100m =
+        haversineKm(BAKERY_LOCATION.lat, BAKERY_LOCATION.lng, existingLat, existingLng) <= 0.1;
+    }
 
     if (agent.consentStatus === "approved") {
       setStatus("تمت الموافقة سابقًا. يمكن إبقاء الصفحة مفتوحة لاستمرار تحديث الموقع.", "success");
