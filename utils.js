@@ -37,11 +37,12 @@ export function formatDistance(distanceKm) {
     return "غير متاح";
   }
 
-  if (distanceKm < 0.1) {
-    return "أقل من 100 متر";
+  if (distanceKm < 1) {
+    const meters = distanceKm * 1000;
+    return `${meters.toFixed(1)} متر`;
   }
 
-  return `${distanceKm.toFixed(2)} كم`;
+  return `${distanceKm.toFixed(3)} كم`;
 }
 
 export function calculateEta(distanceKm, speedMps) {
