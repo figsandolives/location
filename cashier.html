@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>شاشة الكاشير</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="custom-alert-container"></div>
+    <div style="padding: 20px;">
+        <h1 data-key="cashier_title">نظام الكاشير المباشر</h1>
+        <button onclick="location.href='index.html'" data-key="back">العودة للرئيسية</button>
+        <hr>
+        <div id="pos-interface" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px;">
+            <div id="products-grid" style="background: white; padding: 20px; border-radius: 10px;">
+                <h3 data-key="products">المنتجات</h3>
+                </div>
+            <div id="cart" style="background: #eee; padding: 20px; border-radius: 10px;">
+                <h3 data-key="cart">الفاتورة</h3>
+                <div id="cart-items"></div>
+                <button class="main-btn" style="width: 100%;" data-key="pay">دفع</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js" type="module"></script>
+</body>
+</html>
