@@ -3,7 +3,6 @@ import { BAKERY_LOCATION } from "./constants.js";
 import {
   calculateEta,
   escapeHtml,
-  formatDateTime,
   formatDistance,
   formatPhoneForDisplay,
   haversineKm
@@ -15,7 +14,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
 const tableBody = document.getElementById("agentsTableBody");
-const updatedAtEl = document.getElementById("updatedAt");
 const bakeryPositionEl = document.getElementById("bakeryPosition");
 const agentsRef = ref(db, "agents");
 
@@ -28,7 +26,7 @@ document.getElementById("addAgentButton").addEventListener("click", () => {
 function renderEmptyState() {
   tableBody.innerHTML = `
     <tr>
-      <td colspan="8">لا يوجد مناديب حالياً. اضغط "إضافة مندوب جديد" للبدء.</td>
+      <td colspan="7">لا يوجد مناديب حالياً. اضغط "إضافة مندوب جديد" للبدء.</td>
     </tr>
   `;
 }
@@ -100,7 +98,6 @@ function renderRows(agentsMap) {
       const eta = approved
         ? (hasCoordinates ? calculateEta(distanceKm, location.speed) || "غير متاح" : "جارٍ تحديد الموقع...")
         : "بانتظار الموافقة";
-      const lastSeen = approved ? formatDateTime(location.updatedAt || agent.lastSeenAt) : "-";
 
       return `
         <tr>
@@ -115,7 +112,6 @@ function renderRows(agentsMap) {
           <td>${escapeHtml(area)}</td>
           <td>${escapeHtml(distance)}</td>
           <td>${escapeHtml(eta)}</td>
-          <td>${escapeHtml(lastSeen)}</td>
           <td>
             <button
               class="delete-agent-btn"
@@ -168,13 +164,12 @@ onValue(
   agentsRef,
   (snapshot) => {
     renderRows(snapshot.val());
-    updatedAtEl.textContent = formatDateTime(Date.now());
   },
   (error) => {
     console.error(error);
     tableBody.innerHTML = `
       <tr>
-        <td colspan="8">تعذر تحميل بيانات المندوبين من فايربيس.</td>
+        <td colspan="7">تعذر تحميل بيانات المندوبين من فايربيس.</td>
       </tr>
     `;
   }
