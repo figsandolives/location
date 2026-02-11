@@ -2,6 +2,7 @@ import { db } from "./firebase.js";
 import { CONSENT_LINK_BASE } from "./constants.js";
 import { normalizeKuwaitPhone } from "./utils.js";
 import {
+  get,
   push,
   ref,
   set
@@ -30,6 +31,46 @@ function validatePhone(phoneWithCode) {
   return /^965\d{8}$/.test(phoneWithCode);
 }
 
+function normalizeAgentName(nameRaw) {
+  return String(nameRaw || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function findDuplicateType(agentsMap, newName, newPhoneWithCode) {
+  const normalizedNewName = normalizeAgentName(newName);
+  let nameExists = false;
+  let phoneExists = false;
+
+  for (const agent of Object.values(agentsMap || {})) {
+    const existingName = normalizeAgentName(agent?.name);
+    const existingPhone = normalizeKuwaitPhone(agent?.phone || "");
+
+    if (normalizedNewName && existingName === normalizedNewName) {
+      nameExists = true;
+    }
+
+    if (existingPhone && existingPhone === newPhoneWithCode) {
+      phoneExists = true;
+    }
+
+    if (nameExists && phoneExists) {
+      return "both";
+    }
+  }
+
+  if (nameExists) {
+    return "name";
+  }
+
+  if (phoneExists) {
+    return "phone";
+  }
+
+  return null;
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -52,6 +93,24 @@ form.addEventListener("submit", async (event) => {
 
   try {
     const agentsRef = ref(db, "agents");
+    const snapshot = await get(agentsRef);
+    const duplicateType = findDuplicateType(snapshot.val(), name, phoneWithCode);
+
+    if (duplicateType === "both") {
+      showFeedback("لا يمكن الإضافة: الاسم ورقم الهاتف مستخدمان مسبقًا.", "error");
+      return;
+    }
+
+    if (duplicateType === "name") {
+      showFeedback("لا يمكن الإضافة: اسم المندوب موجود مسبقًا.", "error");
+      return;
+    }
+
+    if (duplicateType === "phone") {
+      showFeedback("لا يمكن الإضافة: رقم الهاتف موجود مسبقًا.", "error");
+      return;
+    }
+
     const newAgentRef = push(agentsRef);
     const agentId = newAgentRef.key;
     const consentLink = `${CONSENT_LINK_BASE}${encodeURIComponent(agentId)}`;
