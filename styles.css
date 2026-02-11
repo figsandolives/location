@@ -200,6 +200,25 @@ button.primary:hover {
   font-size: 0.95rem;
 }
 
+.delete-agent-btn {
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.delete-agent-btn:hover {
+  background: #fee2e2;
+}
+
+.delete-agent-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .feedback {
   margin-top: 14px;
   border-radius: 10px;
